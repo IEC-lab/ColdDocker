@@ -1,0 +1,11 @@
+FROM golang
+
+RUN git clone https://github.com/IEC-lab/ColdMountain.git
+
+WORKDIR /go/ColdMountain
+
+ENV GOPROXY=https://goproxy.cn
+
+RUN go mod tidy
+
+CMD ["go", "run", "main.go"]
