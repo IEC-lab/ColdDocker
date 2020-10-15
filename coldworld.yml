@@ -138,3 +138,50 @@ spec:
     targetPort: webservice
     port: 8089
     nodePort: 8089
+
+---
+
+# coldrepo Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coldrepo
+  namespace: coldworld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coldrepo
+  template:
+    metadata:
+      labels:
+        app: coldrepo
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldrepo
+        image: coldrepo
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3306
+          name: mysqlservice
+
+---
+
+# coldrepo Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldrepo-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldrepo
+  ports:
+  - protocol: TCP
+    targetPort: mysqlservice
+    port: 3306
+    nodePort: 3306
