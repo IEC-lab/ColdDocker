@@ -1,0 +1,140 @@
+# namespace: coldworld
+
+# coldbridge Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coldbridge
+  namespace: coldworld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coldbridge
+  template:
+    metadata:
+      labels:
+        app: coldbridge
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldbridge
+        image: coldbridge
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8888
+          name: rtspservice
+      
+---
+
+# coldbridge Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldbridge-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldbridge
+  ports:
+  - protocol: TCP
+    targetPort: rtspservice
+    port: 8888
+    nodePort: 8888
+
+---
+
+# coldmountain Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coldmountain
+  namespace: coldworld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coldmountain
+  template:
+    metadata:
+      labels:
+        app: coldmountain
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldmountain
+        image: coldmountain
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8899
+          name: apiservice
+
+---
+
+# coldmountain Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldmountain-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldmountain
+  ports:
+  - protocol: TCP
+    targetPort: apiservice
+    port: 8899
+    nodePort: 8899
+
+---
+
+# coldcloud Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coldcloud
+  namespace: coldworld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coldcloud
+  template:
+    metadata:
+      labels:
+        app: coldcloud
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldcloud
+        image: coldcloud
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: webservice
+
+---
+
+# coldcloud Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldcloud-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldcloud
+  ports:
+  - protocol: TCP
+    targetPort: webservice
+    port: 8089
+    nodePort: 8089
