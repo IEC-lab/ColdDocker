@@ -141,14 +141,15 @@ spec:
 
 ---
 
-# coldrepo Deployment
+# coldrepo StatefulSet
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: coldrepo
   namespace: coldworld
 spec:
   replicas: 1
+  serviceName: coldrepo-service
   selector:
     matchLabels:
       app: coldrepo
@@ -157,6 +158,8 @@ spec:
       labels:
         app: coldrepo
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: cloud04
       tolerations:
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
@@ -167,6 +170,13 @@ spec:
         ports:
         - containerPort: 3306
           name: mysqlservice
+        volumeMounts:
+        - name: mysqlconf
+          mountPath: /var/lib/mysql
+      volumes:
+        - name: mysqlconf
+          hostPath:
+            path: /home/ws/ColdDocker/mysql
 
 ---
 
@@ -185,3 +195,4 @@ spec:
     targetPort: mysqlservice
     port: 3306
     nodePort: 3306
+
