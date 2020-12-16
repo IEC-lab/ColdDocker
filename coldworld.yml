@@ -115,7 +115,7 @@ spec:
         operator: "Exists"
       containers:
       - name: coldcloud
-        image: coldcloud:201020.01
+        image: coldcloud:201216.01
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
