@@ -21,7 +21,7 @@ spec:
         operator: "Exists"
       containers:
       - name: coldbridge
-        image: coldbridge
+        image: coldbridge:201216.01
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8888
@@ -196,3 +196,130 @@ spec:
     port: 3306
     nodePort: 3306
 
+---
+
+# coldzk StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: coldzk
+  namespace: coldworld
+spec:
+  replicas: 1
+  serviceName: coldzk-service
+  selector:
+    matchLabels:
+      app: coldzk
+  template:
+    metadata:
+      labels:
+        app: coldzk
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: cloud04
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldzk
+        image: wurstmeister/zookeeper
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 2181
+          name: zkservice
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+
+---
+
+# coldzk Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldzk-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldzk
+  ports:
+  - protocol: TCP
+    targetPort: zkservice
+    port: 2181
+    nodePort: 2181
+
+---
+
+# coldq StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: coldq
+  namespace: coldworld
+spec:
+  replicas: 1
+  serviceName: coldq-service
+  selector:
+    matchLabels:
+      app: coldq
+  template:
+    metadata:
+      labels:
+        app: coldq
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: cloud04
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldq
+        image: wurstmeister/kafka:2.11-0.11.0.3
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: "KAFKA_BROKER_ID"
+          value: "0"
+        - name: "KAFKA_ZOOKEEPER_CONNECT"
+          value: "coldzk-service.coldworld"
+        - name: "KAFKA_ADVERTISED_LISTENERS"
+          value: "PLAINTEXT://192.168.1.4:9092"
+        - name: "KAFKA_LISTENERS"
+          value: "PLAINTEXT://0.0.0.0:9092"
+        ports:
+        - containerPort: 9092
+          name: qservice
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: kafkaconf
+          mountPath: /kafka
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: kafkaconf
+          hostPath:
+            path: /home/ws/ColdDocker/kafka
+
+---
+
+# coldq Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldq-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldq
+  ports:
+  - protocol: TCP
+    targetPort: qservice
+    port: 9092
+    nodePort: 9092
