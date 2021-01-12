@@ -1,0 +1,372 @@
+# namespace: coldworld
+
+# coldbridge Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coldbridge
+  namespace: coldworld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coldbridge
+  template:
+    metadata:
+      labels:
+        app: coldbridge
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldbridge
+        image: 222.20.76.205/coldworld/coldbridge
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8888
+          name: rtspservice
+      
+---
+
+# coldbridge Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldbridge-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldbridge
+  ports:
+  - protocol: TCP
+    targetPort: rtspservice
+    port: 8888
+    nodePort: 8888
+
+---
+
+# coldmountain Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coldmountain
+  namespace: coldworld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coldmountain
+  template:
+    metadata:
+      labels:
+        app: coldmountain
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldmountain
+        image: 222.20.76.205/coldworld/coldmountain
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8899
+          name: apiservice
+
+---
+
+# coldmountain Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldmountain-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldmountain
+  ports:
+  - protocol: TCP
+    targetPort: apiservice
+    port: 8899
+    nodePort: 8899
+
+---
+
+# coldcloud Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coldcloud
+  namespace: coldworld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coldcloud
+  template:
+    metadata:
+      labels:
+        app: coldcloud
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldcloud
+        image: 222.20.76.205/coldworld/coldcloud
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: webservice
+
+---
+
+# coldcloud Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldcloud-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldcloud
+  ports:
+  - protocol: TCP
+    targetPort: webservice
+    port: 8089
+    nodePort: 8089
+
+---
+
+# # coldcloudc8l Deployment
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: coldcloudc8l
+#   namespace: coldworld
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: coldcloudc8l
+#   template:
+#     metadata:
+#       labels:
+#         app: coldcloudc8l
+#     spec:
+#       tolerations:
+#       - key: "node-role.kubernetes.io/master"
+#         operator: "Exists"
+#       containers:
+#       - name: coldcloudc8l
+#         image: 222.20.76.205/coldworld/coldcloudc8l
+#         imagePullPolicy: IfNotPresent
+#         ports:
+#         - containerPort: 8080
+#           name: webservice
+
+# ---
+
+# # coldcloudc8l Service
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: coldcloudc8l-service
+#   namespace: coldworld
+# spec:
+#   type: NodePort
+#   selector:
+#     app: coldcloudc8l
+#   ports:
+#   - protocol: TCP
+#     targetPort: webservice
+#     port: 8088
+#     nodePort: 8088
+
+# ---
+
+# coldrepo StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: coldrepo
+  namespace: coldworld
+spec:
+  replicas: 1
+  serviceName: coldrepo-service
+  selector:
+    matchLabels:
+      app: coldrepo
+  template:
+    metadata:
+      labels:
+        app: coldrepo
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: iecv16
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldrepo
+        image: 222.20.76.205/coldworld/coldrepo
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3306
+          name: mysqlservice
+        volumeMounts:
+        - name: mysqlconf
+          mountPath: /var/lib/mysql
+      volumes:
+        - name: mysqlconf
+          hostPath:
+            path: /home/ws/ColdDocker/mysql
+
+---
+
+# coldrepo Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldrepo-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldrepo
+  ports:
+  - protocol: TCP
+    targetPort: mysqlservice
+    port: 3306
+    nodePort: 3306
+
+---
+
+# coldzk StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: coldzk
+  namespace: coldworld
+spec:
+  replicas: 1
+  serviceName: coldzk-service
+  selector:
+    matchLabels:
+      app: coldzk
+  template:
+    metadata:
+      labels:
+        app: coldzk
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: iecv16
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldzk
+        image: 222.20.76.205/coldworld/zookeeper
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 2181
+          name: zkservice
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+
+---
+
+# coldzk Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldzk-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldzk
+  ports:
+  - protocol: TCP
+    targetPort: zkservice
+    port: 2181
+    nodePort: 2181
+
+---
+
+# coldq StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: coldq
+  namespace: coldworld
+spec:
+  replicas: 1
+  serviceName: coldq-service
+  selector:
+    matchLabels:
+      app: coldq
+  template:
+    metadata:
+      labels:
+        app: coldq
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: iecv16
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldq
+        image: 222.20.76.205/coldworld/kafka:2.11-0.11.0.3
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: "KAFKA_BROKER_ID"
+          value: "0"
+        - name: "KAFKA_ZOOKEEPER_CONNECT"
+          value: "coldzk-service.coldworld"
+        - name: "KAFKA_ADVERTISED_LISTENERS"
+          value: "PLAINTEXT://222.20.76.205:9092"
+        - name: "KAFKA_LISTENERS"
+          value: "PLAINTEXT://0.0.0.0:9092"
+        ports:
+        - containerPort: 9092
+          name: qservice
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: kafkaconf
+          mountPath: /kafka
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: kafkaconf
+          hostPath:
+            path: /home/ws/ColdDocker/kafka
+
+---
+
+# coldq Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldq-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldq
+  ports:
+  - protocol: TCP
+    targetPort: qservice
+    port: 9092
+    nodePort: 9092
