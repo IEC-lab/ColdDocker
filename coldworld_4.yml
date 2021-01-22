@@ -141,6 +141,53 @@ spec:
 
 ---
 
+# coldcloudc8l Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coldcloudc8l
+  namespace: coldworld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coldcloudc8l
+  template:
+    metadata:
+      labels:
+        app: coldcloudc8l
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldcloudc8l
+        image: coldcloudc8l:210122
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: webservice
+
+---
+
+# coldcloudc8l Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldcloudc8l-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldcloudc8l
+  ports:
+  - protocol: TCP
+    targetPort: webservice
+    port: 8088
+    nodePort: 8088
+
+---
+
 # coldrepo StatefulSet
 apiVersion: apps/v1
 kind: StatefulSet
