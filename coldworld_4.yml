@@ -370,3 +370,137 @@ spec:
     targetPort: qservice
     port: 9092
     nodePort: 9092
+
+---
+
+# coldswfs-master StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: coldswfs-master
+  namespace: coldworld
+spec:
+  replicas: 1
+  serviceName: coldswfs-master-service
+  selector:
+    matchLabels:
+      app: coldswfs-master
+  template:
+    metadata:
+      labels:
+        app: coldswfs-master
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: cloud04
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldswfs-master
+        image: chrislusf/seaweedfs:210422
+        imagePullPolicy: IfNotPresent
+        args: ["master", "-mdir /swfs_master"]
+        ports:
+        - containerPort: 9333
+          name: port1
+        - containerPort: 19333
+          name: port2
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: swconf
+          mountPath: /swfs_master
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: swconf
+          hostPath:
+            path: /home/ws/ColdDocker/swfs_master
+
+---
+
+# coldswfs-master service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldswfs-master-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldswfs-master
+  ports:
+  - protocol: TCP
+    targetPort: port1
+    port: 9333
+    nodePort: 9333
+    name: port1
+  - protocol: TCP
+    targetPort: port2
+    port: 19333
+    nodePort: 19333
+    name: port2
+
+# ---
+
+# coldswfs-volume StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: coldswfs-volume
+  namespace: coldworld
+spec:
+  replicas: 1
+  serviceName: coldswfs-volume-service
+  selector:
+    matchLabels:
+      app: coldswfs-volume
+  template:
+    metadata:
+      labels:
+        app: coldswfs-volume
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: cloud04
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+      containers:
+      - name: coldswfs-volume
+        image: chrislusf/seaweedfs:210422
+        imagePullPolicy: IfNotPresent
+        args: ["volume", "-mserver=coldswfs-master-service.coldworld:9333", "-port=7777", "-dir swfs_volume"]
+        ports:
+        - containerPort: 7777
+          name: service-port
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: swconf
+          mountPath: /swfs_volume
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+        - name: swconf
+          hostPath:
+            path: /home/ws/ColdDocker/swfs_volume
+
+---
+
+# coldswfs-volume service
+apiVersion: v1
+kind: Service
+metadata:
+  name: coldswfs-volume-service
+  namespace: coldworld
+spec:
+  type: NodePort
+  selector:
+    app: coldswfs-volume
+  ports:
+  - protocol: TCP
+    targetPort: service-port
+    port: 7777
+    nodePort: 7777
