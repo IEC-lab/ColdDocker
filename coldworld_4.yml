@@ -68,7 +68,7 @@ spec:
         operator: "Exists"
       containers:
       - name: coldmountain
-        image: coldmountain:201016.03
+        image: coldmountain:210423.03
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8899
@@ -162,7 +162,7 @@ spec:
         operator: "Exists"
       containers:
       - name: coldcloudc8l
-        image: coldcloudc8l:210122
+        image: coldcloudc8l:210423.01
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
