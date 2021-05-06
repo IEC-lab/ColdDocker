@@ -68,7 +68,7 @@ spec:
         operator: "Exists"
       containers:
       - name: coldmountain
-        image: coldmountain:210423.03
+        image: coldmountain:210506.01
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8899
